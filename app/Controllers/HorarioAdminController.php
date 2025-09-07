@@ -55,26 +55,43 @@ public function crear() {
         $fin       = $_POST['horaFin'];
         $aula      = trim($_POST['aula'] ?? '');
 
-        $err = $this->model->haySolape(null,$idDocAsig,$dia,$inicio,$fin,$aula);
+        // ⬇️ Nuevo: validar con grupo y reglas de bloques
+        $err = $this->model->haySolape(
+            null,
+            $idGrado,$idSeccion,$idModalidad,
+            $idDocAsig,
+            $dia,$inicio,$fin,$aula
+        );
         if (!empty($err)) {
             $grupos     = (new Grupo())->listar();
             $docAsig    = $this->model->docenteAsignaturas();
             $errorList  = $err;
+            // Para mantener prefill si venías desde grid:
+            $prefill = [
+              'idGrupo' => $idGrupo, 'dia' => $dia, 'inicio' => $inicio, 'fin' => $fin, 'aula' => $aula
+            ];
             include VIEW_PATH.'/horario_admin/crear.php';
             return;
         }
 
         $ok = $this->model->crear($idGrado,$idSeccion,$idModalidad,$idDocAsig,$dia,$inicio,$fin,$aula);
-        // Redirigir manteniendo el grupo seleccionado
-        header('Location: '.BASE_URL."/index.php?controller=horarioAdmin&action=index&idGrupo=".$idGrupo);
+        header('Location: '.BASE_URL."/index.php?controller=horarioAdmin&action=index&idGrupo=".$idGrupo."&vista=grid");
         return;
     }
 
-    // GET: mostrar formulario
+    // GET: con prefill opcional desde grid
     $grupos  = (new Grupo())->listar();
     $docAsig = $this->model->docenteAsignaturas();
+    $prefill = [
+        'idGrupo'   => isset($_GET['idGrupo']) ? (int)$_GET['idGrupo'] : null,
+        'dia'       => $_GET['dia']    ?? null,
+        'inicio'    => $_GET['inicio'] ?? null,
+        'fin'       => $_GET['fin']    ?? null,
+        'aula'      => '',
+    ];
     include VIEW_PATH.'/horario_admin/crear.php';
 }
+
 
 public function editar() {
     $this->requireDirectorODocente();
@@ -90,7 +107,13 @@ public function editar() {
         $fin       = $_POST['horaFin'];
         $aula      = trim($_POST['aula'] ?? '');
 
-        $err = $this->model->haySolape($id,$idDocAsig,$dia,$inicio,$fin,$aula);
+        // ⬇️ Nuevo: valida con grupo del propio registro
+        $err = $this->model->haySolape(
+            $id,
+            (int)$row['idGrado'], (int)$row['idSeccion'], (int)$row['idModalidad'],
+            $idDocAsig,
+            $dia,$inicio,$fin,$aula
+        );
         if (!empty($err)) {
             $docAsig   = $this->model->docenteAsignaturas();
             $errorList = $err;
@@ -100,8 +123,7 @@ public function editar() {
 
         $this->model->actualizar($id,$idDocAsig,$dia,$inicio,$fin,$aula);
 
-        // Calcular idGrupo para volver al listado del mismo grupo
-        // (No guardamos idGrupo en DB, lo reconstruimos con los tres IDs de la fila)
+        // Volver al grupo correspondiente (cálculo igual que antes)
         $grupos = (new Grupo())->listar();
         $idGrupo = 0;
         foreach ($grupos as $g) {
@@ -112,11 +134,12 @@ public function editar() {
                 break;
             }
         }
-        header('Location: '.BASE_URL."/index.php?controller=horarioAdmin&action=index".($idGrupo?("&idGrupo=".$idGrupo):""));
+        header('Location: '.BASE_URL."/index.php?controller=horarioAdmin&action=index".($idGrupo?("&idGrupo=".$idGrupo."&vista=grid"):""));
         return;
     }
 
     $docAsig = $this->model->docenteAsignaturas();
     include VIEW_PATH.'/horario_admin/editar.php';
 }
+
 }

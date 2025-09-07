@@ -11,7 +11,10 @@
     <label>Grupo (Grado — Modalidad — Sección):</label>
     <select name="idGrupo" required>
       <?php foreach(($grupos ?? []) as $g): ?>
-        <option value="<?= (int)$g['idGrupo'] ?>"><?= htmlspecialchars($g['nombre']) ?></option>
+        <option value="<?= (int)$g['idGrupo'] ?>"
+          <?= (!empty($prefill['idGrupo']) && (int)$prefill['idGrupo']===(int)$g['idGrupo']) ? 'selected' : '' ?>>
+          <?= htmlspecialchars($g['nombre']) ?>
+        </option>
       <?php endforeach; ?>
     </select>
     <?php if (empty($grupos)): ?>
@@ -21,18 +24,26 @@
 
   <fieldset>
     <legend>Clase</legend>
+
     <label>Día:</label>
     <select name="diaSemana">
-      <option>Lunes</option><option>Martes</option><option>Miércoles</option>
-      <option>Jueves</option><option>Viernes</option><option>Sábado</option>
+      <?php foreach(['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] as $d): ?>
+        <option <?= (!empty($prefill['dia']) && $prefill['dia']===$d) ? 'selected' : '' ?>><?= $d ?></option>
+      <?php endforeach; ?>
     </select>
-    <label>Inicio:</label><input type="time" name="horaInicio" value="07:00" required>
-    <label>Fin:</label><input type="time" name="horaFin" value="08:00" required>
-    <label>Aula:</label><input type="text" name="aula" placeholder="Opcional">
+
+    <label>Inicio:</label>
+    <input type="time" name="horaInicio" value="<?= htmlspecialchars($prefill['inicio'] ?? '07:00') ?>" required>
+
+    <label>Fin:</label>
+    <input type="time" name="horaFin" value="<?= htmlspecialchars($prefill['fin'] ?? '07:45') ?>" required>
+
+    <label>Aula:</label>
+    <input type="text" name="aula" value="<?= htmlspecialchars($prefill['aula'] ?? '') ?>" placeholder="Opcional">
 
     <label>Docente + Asignatura:</label>
     <select name="idDocenteAsignatura" required>
-      <?php foreach($docAsig as $da): ?>
+      <?php foreach ($docAsig as $da): ?>
         <option value="<?= $da['idDocenteAsignatura'] ?>">
           <?= htmlspecialchars($da['nombreUsuario'].' — '.$da['nombreAsignatura']) ?>
         </option>

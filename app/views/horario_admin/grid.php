@@ -3,10 +3,14 @@
 $DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
 // Slot interno fino para poder representar recesos no múltiplos de 45
-$slot = 30; // minutos
+$slot = 5; // minutos
 
-// Guía visual de bloque académico (no cambia el slot interno)
-$bloqueAcademicoMin = 45;
+// Selector de bloque visual (no cambia el slot interno)
+$allowedBloques = [30,45,60]; // opciones del selector
+$bloqueAcademicoMin = (int)($_GET['bloque'] ?? 45);
+if (!in_array($bloqueAcademicoMin, $allowedBloques, true)) {
+  $bloqueAcademicoMin = 45;
+}
 
 // Recesos/almuerzos (mismos cada día):
 $breaks = [
@@ -45,8 +49,8 @@ for ($m=$minM; $m < $maxM; $m += $slot) $timeRows[] = $m;
 $byDayStart = [];
 foreach ($items as $h) {
   $d   = $h['diaSemana'];
-  $stM = t2m(substr($h['horaInicio'],0,45));
-  $enM = t2m(substr($h['horaFin'],0,45));
+  $stM = t2m(substr($h['horaInicio'],0,5));
+  $enM = t2m(substr($h['horaFin'],0,5));
   $span = max(1, (int)ceil(($enM - $stM) / $slot));
   $byDayStart[$d][$stM][] = ['row'=>$h,'span'=>$span,'stM'=>$stM,'enM'=>$enM];
 }
@@ -70,11 +74,14 @@ foreach ($DAYS as $d) {
 // Marcar recesos como ocupados en TODOS los días
 foreach ($DAYS as $d) {
   foreach ($breakStarts as $s => $info) {
-    for ($mm=$s; $mm<$info['e']; $mm+=$slot) {
+    for ($mm=$info['s']; $mm<$info['e']; $mm+=$slot) {
       if (isset($occupied[$d][$mm])) $occupied[$d][$mm] = true;
     }
   }
 }
+
+// idGrupo actual (para el link "nueva franja")
+$currentGrupoId = isset($_GET['idGrupo']) ? (int)$_GET['idGrupo'] : ( (!empty($grupos) ? (int)$grupos[0]['idGrupo'] : 0) );
 
 // ==================== Estilos ====================
 ?>
@@ -86,7 +93,7 @@ foreach ($DAYS as $d) {
   .ttable th.sticky { position:sticky; top:0; background:#fafafa; z-index:2; }
   .timecol { width:76px; background:#fcfcfc; font-weight:600; text-align:center; position:sticky; left:0; z-index:1; }
   .slot { min-height:42px; background: #fff; }
-  /* Guía visual cada 45 min (aplica a la columna de hora) */
+  /* Guía visual cada N min (aplica a la columna de hora) */
   .time-guide { font-size:0.8rem; color:#666; }
   .classcard {
     border:1px solid #ccc; border-left:4px solid #5a8; border-radius:6px;
@@ -104,6 +111,12 @@ foreach ($DAYS as $d) {
     font-weight:600;
     display:flex; align-items:center; justify-content:center;
   }
+  .newcell a {
+    display:block; width:100%; height:100%;
+    text-decoration:none; color:#2a6; font-weight:600; text-align:center;
+    border:1px dashed #bcd; border-radius:6px; padding:8px 6px;
+  }
+  .newcell a:hover { background:#f6fffb; }
   .headerwrap { display:flex; align-items:center; gap:10px; justify-content:space-between; }
   .legend { font-size:0.85rem; color:#666; margin-bottom:6px; }
   @media (max-width: 900px){
@@ -131,9 +144,17 @@ foreach ($DAYS as $d) {
     <?php endforeach; ?>
   </select>
 
+  <label>Bloque:</label>
+  <select name="bloque">
+    <?php foreach ([30,45,60] as $opt): ?>
+      <option value="<?= $opt ?>" <?= ($opt===$bloqueAcademicoMin)?'selected':'' ?>><?= $opt ?> min</option>
+    <?php endforeach; ?>
+  </select>
+
   <button type="submit">Ver</button>
 
-  <a href="<?= BASE_URL ?>/index.php?controller=horarioAdmin&action=index<?= isset($_GET['idGrupo']) ? ('&idGrupo='.(int)$_GET['idGrupo']) : '' ?>">← Vista de lista</a>
+  <a href="<?= BASE_URL ?>/index.php?controller=horarioAdmin&action=index<?= 
+     (isset($_GET['idGrupo']) ? ('&idGrupo='.(int)$_GET['idGrupo']) : '') ?>">← Vista de lista</a>
   <a href="<?= BASE_URL ?>/index.php?controller=horarioAdmin&action=crear">➕ Nueva franja</a>
   <a href="<?= BASE_URL ?>/index.php?controller=grupo&action=index">🧩 Grupos</a>
 </form>
@@ -154,13 +175,13 @@ foreach ($DAYS as $d) {
     </thead>
     <tbody>
       <?php
-      // Para guías cada 45 min
-      $guideEvery = $bloqueAcademicoMin; // 45
+      // Para guías cada N min
+      $guideEvery = $bloqueAcademicoMin;
       $nextGuide  = $minM;
       ?>
       <?php foreach ($timeRows as $m): ?>
         <?php
-          // Preparar guía visual en la columna de hora cada 45 min
+          // Preparar guía visual en la columna de hora cada N min
           $showGuide = ($m === $nextGuide);
           if ($showGuide) $nextGuide += $guideEvery;
 
@@ -177,9 +198,7 @@ foreach ($DAYS as $d) {
               // Si hay un break que empieza ahora y este día no tiene celda aún para el break
               if ($isBreakStart) {
                 $info = $breakStarts[$m];
-                // Si ya está ocupado (porque otro colapso lo marcó), no pintar
                 if (!$occupied[$d][$m]) {
-                  // Marcar ocupación del break en este día
                   for ($mm=$info['s']; $mm<$info['e']; $mm+=$slot) {
                     if (isset($occupied[$d][$mm])) $occupied[$d][$mm] = true;
                   }
@@ -192,56 +211,85 @@ foreach ($DAYS as $d) {
                 continue; // siguiente día
               }
 
-              // Si el minuto actual ya está ocupado por clase o break, no pintar celda (la cubre un rowspan)
+              // Si ya está ocupado por clase o break, no pintar (lo cubre un rowspan)
               if ($occupied[$d][$m]) continue;
 
               // ¿Hay clase que empiece justo en este minuto?
               $cellPrinted = false;
               if (isset($byDayStart[$d][$m])) {
-                // Pintar la primera clase que empiece aquí (si hubiera más, podríamos apilarlas, opcional)
                 $cls = $byDayStart[$d][$m][0];
                 $span = $cls['span'];
 
                 // Si la clase cruza algún break, recortar el rowspan hasta el inicio del primer break
                 foreach ($breakStarts as $bs => $bi) {
                   if ($bs > $m && $bs < ($m + $span*$slot)) {
-                    $span = (int)ceil(($bs - $m)/$slot); // recorta hasta antes del break
+                    $span = (int)ceil(($bs - $m)/$slot);
                     break;
                   }
                 }
 
-                // Marcar ocupadas las filas siguientes por la clase
                 for ($mm = $m; $mm < $m + $span*$slot; $mm += $slot) {
                   if (isset($occupied[$d][$mm])) $occupied[$d][$mm] = true;
                 }
 
                 $h = $cls['row'];
                 ?>
-                <td class="slot" rowspan="<?= (int)$span ?>">
-                  <div class="classcard">
-                    <div class="title"><?= htmlspecialchars($h['nombreAsignatura']) ?></div>
-                    <div class="meta">
-                      <div><?= htmlspecialchars($h['nombreUsuario']) ?></div>
-                      <div>
-                        <span class="tag"><?= htmlspecialchars(substr($h['horaInicio'],0,5)) ?>–<?= htmlspecialchars(substr($h['horaFin'],0,5)) ?></span>
-                        <?php if (!empty($h['aula'])): ?>
-                          &nbsp;• Aula: <strong><?= htmlspecialchars($h['aula']) ?></strong>
-                        <?php endif; ?>
-                      </div>
-                    </div>
-                    <div class="actions">
-                      <a href="<?= BASE_URL ?>/index.php?controller=horarioAdmin&action=editar&id=<?= (int)$h['idHorario'] ?>">Editar</a>
-                      <a href="<?= BASE_URL ?>/index.php?controller=horarioAdmin&action=eliminar&id=<?= (int)$h['idHorario'] ?>">Eliminar</a>
-                    </div>
-                  </div>
-                </td>
+<td class="slot" rowspan="<?= (int)$span ?>">
+  <?php
+    // Color estable por asignatura (HSL desde hash)
+    $asid = (int)($h['idAsignatura'] ?? 0);
+    $hue = ($asid > 0) ? (crc32((string)$asid) % 360) : (crc32($h['nombreAsignatura']) % 360);
+    $border = "hsl($hue, 65%, 42%)";
+    $bg     = "hsl($hue, 85%, 96%)";
+  ?>
+  <div class="classcard" style="border-left-color: <?= $border ?>; background: <?= $bg ?>;">
+    <div class="title"><?= htmlspecialchars($h['nombreAsignatura']) ?></div>
+    <div class="meta">
+      <div><?= htmlspecialchars($h['nombreUsuario']) ?></div>
+      <div>
+        <span class="tag"><?= htmlspecialchars(substr($h['horaInicio'],0,5)) ?>–<?= htmlspecialchars(substr($h['horaFin'],0,5)) ?></span>
+        <?php if (!empty($h['aula'])): ?>
+          &nbsp;• Aula: <strong><?= htmlspecialchars($h['aula']) ?></strong>
+        <?php endif; ?>
+      </div>
+    </div>
+    <div class="actions">
+      <a href="<?= BASE_URL ?>/index.php?controller=horarioAdmin&action=editar&id=<?= (int)$h['idHorario'] ?>">Editar</a>
+      <a href="<?= BASE_URL ?>/index.php?controller=horarioAdmin&action=eliminar&id=<?= (int)$h['idHorario'] ?>">Eliminar</a>
+    </div>
+  </div>
+</td>
+
                 <?php
                 $cellPrinted = true;
               }
 
               if (!$cellPrinted) {
-                // Celda vacía
-                ?><td class="slot"></td><?php
+                // Celda vacía: generar enlace para crear franja con (día, inicio, fin) precargados
+                // Fin sugerido = inicio + bloque visual, pero si hay break antes, recortamos.
+                $suggStart = $m;
+                $suggEnd   = $m + $bloqueAcademicoMin; // minutos
+
+                foreach ($breakStarts as $bs => $bi) {
+                  if ($bs > $suggStart && $bs < $suggEnd) {
+                    $suggEnd = $bs; // recorta al inicio del break
+                    break;
+                  }
+                }
+                if ($suggEnd > $maxM) $suggEnd = $maxM;
+
+                $paramDia = urlencode($d);
+                $paramIni = urlencode(m2t($suggStart));
+                $paramFin = urlencode(m2t($suggEnd));
+                $paramGrupo = (int)$currentGrupoId;
+
+                $createUrl = BASE_URL . "/index.php?controller=horarioAdmin&action=crear"
+                           . "&idGrupo={$paramGrupo}&dia={$paramDia}&inicio={$paramIni}&fin={$paramFin}";
+                ?>
+                  <td class="slot newcell">
+                    <a href="<?= $createUrl ?>">+ Clase<br><small><?= htmlspecialchars(m2t($suggStart)."–".m2t($suggEnd)) ?></small></a>
+                  </td>
+                <?php
               }
             ?>
           <?php endforeach; ?>

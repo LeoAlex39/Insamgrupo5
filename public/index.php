@@ -31,6 +31,9 @@ require_once APP_PATH . '/models/Matricula.php';
 require_once APP_PATH.'/models/Seccion.php';
 require_once APP_PATH.'/models/HorarioAdmin.php';
 require_once APP_PATH.'/models/Grupo.php';
+require_once APP_PATH.'/models/Docente.php';
+require_once APP_PATH.'/models/Alumno.php';
+
 
 
 
@@ -45,6 +48,11 @@ require_once APP_PATH . '/controllers/MatriculaController.php';
 require_once APP_PATH.'/controllers/SeccionController.php';
 require_once APP_PATH.'/controllers/HorarioAdminController.php';
 require_once APP_PATH.'/controllers/GrupoController.php';
+require_once APP_PATH.'/controllers/DocenteController.php';
+require_once APP_PATH.'/controllers/AlumnosController.php';
+
+
+
 
 // Router simple
 $controller = $_GET['controller'] ?? 'auth';
