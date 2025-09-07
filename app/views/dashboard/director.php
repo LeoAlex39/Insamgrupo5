@@ -10,7 +10,7 @@
 <li><a href="<?= BASE_URL ?>/index.php?controller=seccion&action=index">⚙️ Secciones</a></li>
 <li><a href="<?= BASE_URL ?>/index.php?controller=grupo&action=index">🧩 Grupos (Grado+Modalidad+Sección)</a></li>
 
-
+<li><a href="<?= BASE_URL ?>/index.php?controller=horarioAdmin&action=index&vista=grid">🗓️ Vista de horario</a></li>
 
     <li><a href="<?= BASE_URL ?>/index.php?controller=auth&action=logout">🚪 Cerrar sesión</a></li>
   </ul>

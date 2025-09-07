@@ -34,32 +34,53 @@ class HorarioAdmin {
     }
 
     /* Validar solape (docente o aula) */
-    public function haySolape(?int $idHorario, int $idDocenteAsignatura, string $dia, string $inicio, string $fin, ?string $aula): array {
-        $errores = [];
+public function haySolape(?int $idHorario, int $idDocenteAsignatura, string $dia, string $inicio, string $fin, ?string $aula): array {
+    $errores = [];
 
-        // 1) Solape del DOCENTE
-        $sqlDoc = "SELECT h.*
-                     FROM horario h
-                     WHERE h.idDocenteAsignatura=? AND h.diaSemana=? 
-                       AND NOT (h.horaFin <= ? OR h.horaInicio >= ?)";
-        if ($idHorario) $sqlDoc .= " AND h.idHorario <> ".(int)$idHorario;
-        $st = $this->db->prepare($sqlDoc);
-        $st->execute([$idDocenteAsignatura,$dia,$inicio,$fin]);
-        if ($st->fetch()) $errores[] = "El docente ya tiene una clase en ese horario.";
-
-        // 2) Solape de AULA (si se indicó)
-        if ($aula && trim($aula) !== '') {
-            $sqlAu = "SELECT h.* FROM horario h
-                      WHERE h.aula = ? AND h.diaSemana=? 
-                        AND NOT (h.horaFin <= ? OR h.horaInicio >= ?)";
-            if ($idHorario) $sqlAu .= " AND h.idHorario <> ".(int)$idHorario;
-            $st2 = $this->db->prepare($sqlAu);
-            $st2->execute([$aula,$dia,$inicio,$fin]);
-            if ($st2->fetch()) $errores[] = "El aula ya está ocupada en ese horario.";
+    // --- Reglas de recesos/almuerzo (mismos para todos los días)
+    $breaks = [
+      ['08:00','08:30','Receso'],
+      ['10:00','10:10','Receso'],
+      ['11:45','12:25','Almuerzo'],
+      ['13:55','14:05','Receso'],
+      ['15:35','15:45','Receso'],
+    ];
+    $t2m = function($t){ [$h,$m]=explode(':',$t); return ((int)$h)*60+(int)$m; };
+    $s = $t2m(substr($inicio,0,5));
+    $e = $t2m(substr($fin,0,5));
+    foreach ($breaks as [$bi,$bf,$label]) {
+        $bs=$t2m($bi); $be=$t2m($bf);
+        // intersecta?
+        if (!($e <= $bs || $s >= $be)) {
+            $errores[] = "Cruza {$label} {$bi}-{$bf}. Ajusta la franja.";
+            break;
         }
-
-        return $errores;
     }
+
+    // --- Solape del DOCENTE
+    $sqlDoc = "SELECT h.*
+                 FROM horario h
+                WHERE h.idDocenteAsignatura=? AND h.diaSemana=?
+                  AND NOT (h.horaFin <= ? OR h.horaInicio >= ?)";
+    if ($idHorario) $sqlDoc .= " AND h.idHorario <> ".(int)$idHorario;
+    $st = $this->db->prepare($sqlDoc);
+    $st->execute([$idDocenteAsignatura,$dia,$inicio,$fin]);
+    if ($st->fetch()) $errores[] = "El docente ya tiene una clase en ese horario.";
+
+    // --- Solape de AULA
+    if ($aula && trim($aula) !== '') {
+        $sqlAu = "SELECT h.* FROM horario h
+                  WHERE h.aula = ? AND h.diaSemana=?
+                    AND NOT (h.horaFin <= ? OR h.horaInicio >= ?)";
+        if ($idHorario) $sqlAu .= " AND h.idHorario <> ".(int)$idHorario;
+        $st2 = $this->db->prepare($sqlAu);
+        $st2->execute([$aula,$dia,$inicio,$fin]);
+        if ($st2->fetch()) $errores[] = "El aula ya está ocupada en ese horario.";
+    }
+
+    return $errores;
+}
+
 
     /* Crear/Actualizar/Eliminar */
     public function crear(int $idGrado,int $idSeccion,int $idModalidad,int $idDocAsig,string $dia,string $inicio,string $fin,?string $aula): bool {
@@ -88,4 +109,6 @@ class HorarioAdmin {
         $st = $this->db->prepare("DELETE FROM horario WHERE idHorario=?");
         return $st->execute([$idHorario]);
     }
+
+    
 }
