@@ -7,7 +7,6 @@ class AuthController {
     }
 
     public function loginForm() {
-        // usa la ruta absoluta definida en public/index.php
         include VIEW_PATH . '/auth/login.php';
     }
 
@@ -18,13 +17,17 @@ class AuthController {
 
             $user = $this->model->login($correo, $password);
             if ($user) {
-                $_SESSION['usuario'] = $user;
+                // ✅ Guardamos datos importantes en la sesión
+                $_SESSION['usuario_id'] = $user['id'];   // ID del usuario
+                $_SESSION['usuario']    = $user;         // Datos completos (opcional)
+                $_SESSION['rol']        = $user['rol'];  // Rol del usuario
+
+                // Redirigir según rol
                 if ($user['rol'] === 'Director') {
                     header('Location: index.php?controller=dashboard&action=director');
                 } elseif ($user['rol'] === 'Docente') {
                     header('Location: index.php?controller=dashboard&action=docente');
                 } else {
-                    // rol vacío o no soportado
                     echo "Rol no soportado o vacío.";
                 }
                 exit;

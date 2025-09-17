@@ -1,7 +1,9 @@
 <?php
 class AsistenciaController {
     private $model;
-    public function __construct() { $this->model = new Asistencia(); }
+    public function __construct() { 
+        $this->model = new Asistencia(); 
+    }
 
     public function index() {
         // Puedes redirigir a Horario para seleccionar clase:
@@ -20,9 +22,11 @@ class AsistenciaController {
             exit;
         } else {
             $idHorario = (int)($_GET['idHorario'] ?? 0);
+
             // Seguridad mínima: verifica que el horario pertenece al docente logueado (opcional)
             if (!isset($_SESSION['usuario']) || $_SESSION['usuario']['rol'] !== 'Docente') {
-                header('Location: ' . BASE_URL . '/index.php?controller=auth&action=loginForm'); exit;
+                header('Location: ' . BASE_URL . '/index.php?controller=auth&action=loginForm'); 
+                exit;
             }
 
             $infoClase = $this->model->infoClase($idHorario);
@@ -36,7 +40,9 @@ class AsistenciaController {
             $anio = isset($_GET['anio']) ? (int)$_GET['anio'] : null;
             $alumnos = $this->model->alumnosPorHorario($idHorario, $anio);
 
-            include VIEW_PATH . '/asistencia/registrar.php';
+            // 👉 Usar layout con vista específica
+            $viewFile = VIEW_PATH . '/asistencia/registrar.php';
+            include VIEW_PATH . '/layout_director.php';
         }
     }
 
@@ -44,6 +50,9 @@ class AsistenciaController {
         $idHorario = (int)($_GET['idHorario'] ?? 0);
         $infoClase = $this->model->infoClase($idHorario);
         $datos     = $this->model->listarHoy($idHorario);
-        include VIEW_PATH . '/asistencia/lista.php';
+
+        // 👉 Usar layout con vista específica
+        $viewFile = VIEW_PATH . '/asistencia/lista.php';
+        include VIEW_PATH . '/layout_director.php';
     }
 }

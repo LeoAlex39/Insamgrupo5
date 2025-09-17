@@ -20,6 +20,9 @@ class ReporteController {
             include VIEW_PATH . '/reportes/asistencia.php';
         } else {
             include VIEW_PATH . '/reportes/formulario.php';
+
+        
+            
         }
     }
 }

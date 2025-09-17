@@ -86,43 +86,298 @@ $currentGrupoId = isset($_GET['idGrupo']) ? (int)$_GET['idGrupo'] : ( (!empty($g
 // ==================== Estilos ====================
 ?>
 <style>
-  .toolbar { display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
-  .toolbar select, .toolbar button, .toolbar a { padding:6px 8px; }
-  .ttable { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
-  .ttable th, .ttable td { border:1px solid #ddd; padding:6px; vertical-align:top; }
-  .ttable th.sticky { position:sticky; top:0; background:#fafafa; z-index:2; }
-  .timecol { width:76px; background:#fcfcfc; font-weight:600; text-align:center; position:sticky; left:0; z-index:1; }
-  .slot { min-height:42px; background: #fff; }
-  /* Guía visual cada N min (aplica a la columna de hora) */
-  .time-guide { font-size:0.8rem; color:#666; }
-  .classcard {
-    border:1px solid #ccc; border-left:4px solid #5a8; border-radius:6px;
-    padding:6px; margin:0; background:#fff; height:100%; display:flex; flex-direction:column; gap:4px;
-  }
-  .classcard .title { font-weight:600; font-size:0.95rem; line-height:1.2; }
-  .classcard .meta { font-size:0.82rem; color:#333; }
-  .classcard .meta .tag { display:inline-block; padding:1px 6px; border:1px solid #ddd; border-radius:999px; font-size:0.75rem; }
-  .classcard .actions a { font-size:0.8rem; text-decoration:none; margin-right:8px; }
-  .breakcell {
-    background: #f5f7fa;
-    color:#444;
-    border-left:4px solid #999;
-    text-align:center;
-    font-weight:600;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .newcell a {
-    display:block; width:100%; height:100%;
-    text-decoration:none; color:#2a6; font-weight:600; text-align:center;
-    border:1px dashed #bcd; border-radius:6px; padding:8px 6px;
-  }
-  .newcell a:hover { background:#f6fffb; }
-  .headerwrap { display:flex; align-items:center; gap:10px; justify-content:space-between; }
-  .legend { font-size:0.85rem; color:#666; margin-bottom:6px; }
-  @media (max-width: 900px){
-    .timecol { width:64px; }
-    .slot { min-height:36px; }
-  }
+  /* === Base / tipografías ===
+   Usa las mismas familias que has usado en otras pantallas.
+   Si quieres una fuente específica (p. ej. Inter, Poppins), añade el @import o link en el head.
+*/
+:root{
+  --accent: #0097a7;
+  --accent-dark: #007c8a;
+  --muted: #6b7280;
+  --card-bg: #ffffff;
+  --surface: #f7fbfc;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --radius: 12px;
+  --shadow-1: 0 6px 18px rgba(2,6,23,0.06);
+  --shadow-2: 0 2px 8px rgba(2,6,23,0.04);
+  --border: #e6eef0;
+}
+
+*{box-sizing:border-box}
+body {
+  font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  color: #1f2937;
+  background: linear-gradient(180deg,#f3fbfc 0%, #ffffff 120%);
+  padding: 18px;
+}
+
+/* Header + leyenda */
+.headerwrap {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.headerwrap h2 {
+  margin:0;
+  font-size:20px;
+  font-weight:600;
+  color:#0f172a;
+}
+
+.legend {
+  color: var(--muted);
+  font-size:0.9rem;
+  background: #fff;
+  padding:8px 12px;
+  border-radius:10px;
+  box-shadow: var(--shadow-2);
+  border:1px solid var(--border);
+}
+
+/* Toolbar (filtros) */
+.toolbar {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+  background: var(--card-bg);
+  padding:12px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  border:1px solid var(--border);
+}
+
+.toolbar label {
+  font-weight:600;
+  color:#334155;
+  margin-right:4px;
+}
+
+.toolbar select {
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid #e6eef0;
+  outline:none;
+  background:#fff;
+  min-width:120px;
+}
+
+.toolbar select:focus {
+  box-shadow: 0 0 0 4px rgba(0,151,167,0.08);
+  border-color: var(--accent);
+}
+
+.toolbar button {
+  background: var(--accent);
+  color:#fff;
+  border:none;
+  padding:9px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.toolbar a {
+  text-decoration:none;
+  padding:8px 12px;
+  border-radius:8px;
+  background:#eef7f8;
+  color:#075b61;
+  border:1px solid #dff2f3;
+  font-weight:600;
+}
+
+/* Avisos (errores / no grupos) */
+div[style*="color:#b00"], .no-groups {
+  background:#fff6f6;
+  color:#b00;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid rgba(220,53,69,0.12);
+  margin-bottom:12px;
+  box-shadow:var(--shadow-2);
+}
+
+/* Contenedor scrollable de la tabla */
+.table-wrap {
+  overflow:auto;
+  width:100%;
+  background:transparent;
+  border-radius:12px;
+}
+
+/* Tabla — cuadrícula */
+.ttable {
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  table-layout:fixed;
+  min-width:900px; /* evita colapso excesivo; horizontal scroll en pantallas pequeñas */
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  overflow:hidden;
+  box-shadow: var(--shadow-2);
+  border:1px solid var(--border);
+}
+
+/* Cabeceras */
+.ttable thead th {
+  position:sticky;
+  top:0;
+  background: linear-gradient(180deg,#fbfeff,#f6fbfb);
+  padding:12px 14px;
+  text-align:left;
+  font-weight:700;
+  color:#0f172a;
+  border-bottom:1px solid #eef3f4;
+  z-index:3;
+}
+
+/* Columna de hora (sticky a la izquierda) */
+.ttable th.timecol,
+.ttable td.timecol {
+  position:sticky;
+  left:0;
+  width:88px;
+  min-width:72px;
+  background:#ffffff;
+  text-align:center;
+  font-weight:700;
+  color:#0b7285;
+  z-index:4;
+  border-right:1px solid #eef3f4;
+}
+
+/* Celdas */
+.ttable td, .ttable th {
+  padding:8px 12px;
+  vertical-align:top;
+  border-right:1px solid rgba(6,10,15,0.03);
+}
+
+/* Filas y slots */
+.slot {
+  min-height:46px;
+  background:var(--card-bg);
+}
+
+/* Guía en la columna de hora (texto pequeño y menos opaco) */
+.time-guide { font-size:0.82rem; color:var(--muted); }
+
+/* Tarjeta de clase */
+.classcard {
+  border: 1px solid #e6eef0;
+  border-left:6px solid var(--accent);
+  border-radius:8px;
+  padding:8px;
+  margin:0;
+  background: linear-gradient(180deg, #ffffff, rgba(0,151,167,0.03));
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  box-shadow: 0 2px 6px rgba(2,6,23,0.04);
+}
+
+.classcard .title {
+  font-weight:700;
+  font-size:0.96rem;
+  color:#062e35;
+  line-height:1.15;
+}
+
+.classcard .meta { font-size:0.86rem; color:#334155; display:flex; flex-direction:column; gap:4px; }
+
+.classcard .meta .tag {
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:0.75rem;
+  border:1px solid #e6eef0;
+  background:#fcfeff;
+  color:#0b7285;
+  font-weight:600;
+}
+
+/* Acciones de cada tarjeta */
+.classcard .actions {
+  margin-top:auto;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.classcard .actions a {
+  text-decoration:none;
+  font-size:0.85rem;
+  padding:6px 8px;
+  border-radius:8px;
+  border:1px solid transparent;
+  background:rgba(15,23,42,0.03);
+  color:#0f172a;
+}
+
+.classcard .actions a[href*="editar"]{ background: linear-gradient(180deg,#fff8e6,#fff3d6); border-color: rgba(0,0,0,0.03); color:#734f07; }
+.classcard .actions a[href*="eliminar"]{ background: linear-gradient(180deg,#fff2f3,#ffecec); color:var(--danger); }
+
+/* Celdas de receso */
+.breakcell {
+  background:#f1f5f9;
+  color:#334155;
+  border-left:6px solid #9aa0a6;
+  text-align:center;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0.95rem;
+}
+
+/* Nueva celda (enlace para crear franja) */
+.newcell a {
+  display:block;
+  width:100%;
+  height:100%;
+  text-decoration:none;
+  color:var(--accent);
+  font-weight:700;
+  text-align:center;
+  border:1px dashed rgba(5,111,119,0.16);
+  border-radius:8px;
+  padding:10px 6px;
+  background: linear-gradient(180deg, rgba(0,151,167,0.02), transparent);
+}
+
+.newcell a small { display:block; font-weight:500; color:var(--muted); font-size:0.8rem; margin-top:6px; }
+
+/* Hovers */
+.ttable tbody tr:hover td { background: rgba(3,7,18,0.01); }
+.newcell a:hover { background: rgba(0,151,167,0.06); transform:translateY(-1px); transition:all .12s ease; }
+
+/* Responsive */
+@media (max-width:1000px){
+  .toolbar { padding:10px; gap:8px; }
+  .ttable { min-width:760px; }
+  .timecol { width:72px; }
+  .classcard .title { font-size:0.92rem; }
+  .slot { min-height:40px; }
+}
+
+@media (max-width:700px){
+  body{padding:12px}
+  .headerwrap{flex-direction:column; align-items:flex-start; gap:6px;}
+  .toolbar{flex-direction:column; align-items:stretch}
+  .toolbar select{width:100%;}
+  .toolbar a{width:100%; text-align:center;}
+  .ttable{min-width:600px;}
+}
+
 </style>
 
 <div class="headerwrap">

@@ -6,7 +6,8 @@ class DashboardController {
             exit;
         }
         $usuario = $_SESSION['usuario'];
-        include VIEW_PATH . '/dashboard/director.php';
+        $viewFile = VIEW_PATH . '/dashboard/director.php';
+        include VIEW_PATH . '/layout_director.php';
     }
 
     public function docente() {
@@ -15,6 +16,8 @@ class DashboardController {
             exit;
         }
         $usuario = $_SESSION['usuario'];
-        include VIEW_PATH . '/dashboard/docente.php';
+        $viewFile = VIEW_PATH . '/dashboard/docente.php';
+        include VIEW_PATH . '/layout.php';
     }
 }
+

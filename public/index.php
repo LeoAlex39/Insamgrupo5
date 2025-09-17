@@ -11,7 +11,6 @@ $basePath = rtrim(str_replace('\\','/', dirname($_SERVER['SCRIPT_NAME'])), '/');
 define('BASE_URL', $scheme . '://' . $host . $basePath);
 // Ejemplo: http://localhost/Pruebas/public
 
-
 // Iniciar sesión SOLO una vez
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -28,14 +27,10 @@ require_once APP_PATH . '/models/Asistencia.php';
 require_once APP_PATH . '/models/Reporte.php';
 require_once APP_PATH . '/models/ReporteConducta.php';
 require_once APP_PATH . '/models/Matricula.php';
-require_once APP_PATH.'/models/Seccion.php';
-require_once APP_PATH.'/models/HorarioAdmin.php';
-require_once APP_PATH.'/models/Grupo.php';
-require_once APP_PATH.'/models/Docente.php';
-require_once APP_PATH.'/models/Alumno.php';
-
-
-
+require_once APP_PATH . '/models/HorarioAdmin.php';
+require_once APP_PATH . '/models/Grupo.php';
+require_once APP_PATH . '/models/Docente.php';
+require_once APP_PATH . '/models/Alumno.php';
 
 require_once APP_PATH . '/controllers/AuthController.php';
 require_once APP_PATH . '/controllers/DashboardController.php';
@@ -45,20 +40,31 @@ require_once APP_PATH . '/controllers/HorarioController.php';
 require_once APP_PATH . '/controllers/ReporteController.php';
 require_once APP_PATH . '/controllers/ReporteConductaController.php';
 require_once APP_PATH . '/controllers/MatriculaController.php';
-require_once APP_PATH.'/controllers/SeccionController.php';
-require_once APP_PATH.'/controllers/HorarioAdminController.php';
-require_once APP_PATH.'/controllers/GrupoController.php';
-require_once APP_PATH.'/controllers/DocenteController.php';
-require_once APP_PATH.'/controllers/AlumnosController.php';
+require_once APP_PATH . '/controllers/HorarioAdminController.php';
+require_once APP_PATH . '/controllers/GrupoController.php';
+require_once APP_PATH . '/controllers/DocenteController.php';
+require_once APP_PATH . '/controllers/AlumnosController.php';
 
+// ------------------
+// Router simple mejorado
+// ------------------
+$controller = $_GET['controller'] ?? null;
+$action     = $_GET['action'] ?? null;
 
+if (!$controller && !$action) {
+    // Si no se pasó nada en la URL
+    if (!empty($_SESSION['usuario_id'])) {
+        // Usuario logueado -> ir al dashboard
+        $controller = 'dashboard';
+        $action     = 'index';
+    } else {
+        // Usuario NO logueado -> ir al login
+        $controller = 'auth';
+        $action     = 'loginForm';
+    }
+}
 
-
-// Router simple
-$controller = $_GET['controller'] ?? 'auth';
-$action     = $_GET['action']     ?? 'loginForm';
-
-$controllerName = ucfirst($controller).'Controller';
+$controllerName = ucfirst($controller) . 'Controller';
 if (class_exists($controllerName)) {
     $ctrl = new $controllerName();
     if (method_exists($ctrl, $action)) {

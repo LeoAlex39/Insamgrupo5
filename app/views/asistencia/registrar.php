@@ -1,110 +1,209 @@
-<?php
+<?php 
 // Variables esperadas: $infoClase, $alumnos
 ?>
-<h2>Pasar asistencia</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registrar Asistencia</title>
+  <link rel="stylesheet" href="<?= BASE_URL ?>/public/css/asistencia.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    .bg-teal { background-color: #009688 !important; }
+    .btn-teal { background-color: #009688; color: white; }
+    .btn-teal:hover { background-color: #00796b; color: white; }
+    .estado-pill {
+      display: inline-block;
+      padding: .3rem .8rem;
+      margin: 0 .2rem;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      user-select: none;
+    }
+    .estado-pill input { display: none; }
+    .estado-pill.active { background-color: #009688; color: white; border-color: #009688; }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-teal">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">INSAM</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/index.php">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/index.php?controller=asistencia&action=lista&idHorario=<?= $infoClase['idHorario'] ?>">Ver Asistencias</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-<div style="padding:10px;border:1px solid #ccc;margin-bottom:10px;">
-  <strong>Clase:</strong> <?= htmlspecialchars($infoClase['nombreAsignatura']) ?>
-  &nbsp;|&nbsp; <strong>Grado/Sección:</strong> <?= htmlspecialchars($infoClase['nombreGrado']) ?> - <?= htmlspecialchars($infoClase['nombreSeccion']) ?>
-  &nbsp;|&nbsp; <strong>Modalidad:</strong> <?= htmlspecialchars($infoClase['nombreModalidad']) ?>
-  <br>
-  <strong>Día:</strong> <?= htmlspecialchars($infoClase['diaSemana']) ?>
-  &nbsp;|&nbsp; <strong>Hora:</strong> <?= htmlspecialchars(substr($infoClase['horaInicio'],0,5)) ?>–<?= htmlspecialchars(substr($infoClase['horaFin'],0,5)) ?>
-  &nbsp;|&nbsp; <strong>Aula:</strong> <?= htmlspecialchars($infoClase['aula'] ?? '-') ?>
-</div>
+  <!-- Contenedor -->
+  <div class="container my-5">
 
-<form method="POST" action="<?= BASE_URL ?>/index.php?controller=asistencia&action=registrar">
-  <input type="hidden" name="idHorario" value="<?= (int)$infoClase['idHorario'] ?>">
+    <!-- Bloque de filtros estilo imagen -->
+    <div class="card shadow-sm mb-4 p-4">
+      <h4 class="fw-bold mb-4">Reporte de Asistencia por Grupo</h4>
+      <form class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Grado</label>
+          <select class="form-select">
+            <option>Grado 1</option>
+            <option>Grado 2</option>
+            <option>Grado 3</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Sección</label>
+          <select class="form-select">
+            <option>Sección A</option>
+            <option>Sección B</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Modalidad</label>
+          <select class="form-select">
+            <option>Presencial</option>
+            <option>Virtual</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Año Lectivo</label>
+          <select class="form-select">
+            <option>2024-2025</option>
+            <option>2023-2024</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Desde</label>
+          <input type="date" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Hasta</label>
+          <input type="date" class="form-control">
+        </div>
+        <div class="col-12 text-end mt-3">
+          <button type="button" class="btn btn-teal">
+            <i class="bi bi-search"></i> Generar Reporte
+          </button>
+        </div>
+      </form>
+    </div>
 
-  <div style="margin:10px 0;">
-    <em>Acciones rápidas:</em>
-    <button type="button" onclick="marcarTodo('Presente')">Marcar todo Presente</button>
-    <button type="button" onclick="marcarTodo('Ausente')">Marcar todo Ausente</button>
-    <button type="button" onclick="marcarTodo('Tarde')">Marcar todo Tarde</button>
-    <button type="button" onclick="marcarTodo('Excusa')">Marcar todo Excusa</button>
+    <!-- Card de pasar asistencia -->
+    <div class="card shadow-lg p-4">
+      <h3 class="mb-4 fw-bold">Pasar Asistencia</h3>
+
+      <!-- Info de clase -->
+      <div class="mb-4 p-3 bg-light rounded">
+        <p><strong>Clase:</strong> <?= htmlspecialchars($infoClase['nombreAsignatura']) ?></p>
+        <p><strong>Grado/Sección:</strong> <?= htmlspecialchars($infoClase['nombreGrado']) ?> - <?= htmlspecialchars($infoClase['nombreSeccion']) ?> | 
+           <strong>Modalidad:</strong> <?= htmlspecialchars($infoClase['nombreModalidad']) ?></p>
+        <p><strong>Día:</strong> <?= htmlspecialchars($infoClase['diaSemana']) ?> | 
+           <strong>Hora:</strong> <?= htmlspecialchars(substr($infoClase['horaInicio'],0,5)) ?>–<?= htmlspecialchars(substr($infoClase['horaFin'],0,5)) ?> | 
+           <strong>Aula:</strong> <?= htmlspecialchars($infoClase['aula'] ?? '-') ?></p>
+      </div>
+
+      <!-- Formulario -->
+      <form method="POST" action="<?= BASE_URL ?>/index.php?controller=asistencia&action=registrar">
+        <input type="hidden" name="idHorario" value="<?= (int)$infoClase['idHorario'] ?>">
+
+        <!-- Acciones rápidas -->
+        <div class="mb-3">
+          <em class="d-block mb-2">Acciones rápidas:</em>
+          <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="marcarTodo('Presente')">Todos Presente</button>
+          <button type="button" class="btn btn-sm btn-outline-danger me-2" onclick="marcarTodo('Ausente')">Todos Ausente</button>
+          <button type="button" class="btn btn-sm btn-outline-warning me-2" onclick="marcarTodo('Tarde')">Todos Tarde</button>
+          <button type="button" class="btn btn-sm btn-outline-info" onclick="marcarTodo('Excusa')">Todos Excusa</button>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle text-center">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Alumno</th>
+                <th>NIE</th>
+                <th>Estado</th>
+                <th>Observación</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (!empty($alumnos)): $i=1; foreach ($alumnos as $al): 
+                $id = (int)$al['id_alumno'];
+                $nameGroup = "estado[$id]";
+              ?>
+                <tr data-alumno="<?= $id ?>">
+                  <td><?= $i++ ?></td>
+                  <td><?= htmlspecialchars($al['nombre']) ?></td>
+                  <td><?= htmlspecialchars($al['nie']) ?></td>
+                  <td>
+                    <div class="estado-grid" role="radiogroup" aria-label="Estado de <?= htmlspecialchars($al['nombre']) ?>">
+                      <?php
+                        $opts = ['Presente','Ausente','Tarde','Excusa'];
+                        foreach ($opts as $opt):
+                          $idRadio = "estado_{$id}_".strtolower($opt);
+                          $checked = ($opt === 'Presente') ? 'checked' : '';
+                      ?>
+                        <label class="estado-pill <?= $checked ? 'active' : '' ?>" for="<?= $idRadio ?>">
+                          <input type="radio" id="<?= $idRadio ?>" name="<?= $nameGroup ?>" value="<?= $opt ?>" <?= $checked ?>>
+                          <?= $opt ?>
+                        </label>
+                      <?php endforeach; ?>
+                    </div>
+                  </td>
+                  <td>
+                    <input type="text" name="observacion[<?= $id ?>]" class="form-control" placeholder="Opcional">
+                  </td>
+                </tr>
+              <?php endforeach; else: ?>
+                <tr><td colspan="5">No hay alumnos para esta clase (verifica matrícula/año).</td></tr>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Botones -->
+        <div class="text-end mt-3">
+          <button type="submit" class="btn btn-teal">
+            <i class="bi bi-check-circle"></i> Guardar asistencia
+          </button>
+          <a href="<?= BASE_URL ?>/index.php?controller=horario&action=index" class="btn btn-outline-secondary ms-2">
+            ⬅️ Volver a mi horario
+          </a>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <style>
-    .estado-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .estado-pill { border: 1px solid #ccc; border-radius: 16px; padding: 6px 10px; display: inline-block; cursor: pointer; user-select: none; text-align:center; }
-    .estado-pill input { display: none; }
-    .estado-pill.active { background: #f0f0f0; border-color: #999; font-weight: 600; }
-    @media (max-width: 640px) { .estado-grid { grid-template-columns: repeat(2, 1fr); } }
-  </style>
-
-  <table border="1" cellpadding="6" cellspacing="0" width="100%">
-    <tr>
-      <th>#</th>
-      <th>Alumno</th>
-      <th>NIE</th>
-      <th>Estado</th>
-      <th>Observación</th>
-    </tr>
-
-    <?php if (!empty($alumnos)): $i=1; foreach ($alumnos as $al): 
-      $id = (int)$al['id_alumno'];
-      $nameGroup = "estado[$id]"; // mismo name => radios exclusivos por alumno
-    ?>
-      <tr data-alumno="<?= $id ?>">
-        <td><?= $i++ ?></td>
-        <td><?= htmlspecialchars($al['nombre']) ?></td>
-        <td><?= htmlspecialchars($al['nie']) ?></td>
-        <td>
-          <div class="estado-grid" role="radiogroup" aria-label="Estado de <?= htmlspecialchars($al['nombre']) ?>">
-            <?php
-              $opts = ['Presente','Ausente','Tarde','Excusa'];
-              foreach ($opts as $opt):
-                $idRadio = "estado_{$id}_".strtolower($opt);
-                $checked = ($opt === 'Presente') ? 'checked' : '';
-            ?>
-              <label class="estado-pill <?= $checked ? 'active' : '' ?>" for="<?= $idRadio ?>">
-                <input type="radio" id="<?= $idRadio ?>" name="<?= $nameGroup ?>" value="<?= $opt ?>" <?= $checked ?>>
-                <?= $opt ?>
-              </label>
-            <?php endforeach; ?>
-          </div>
-        </td>
-        <td>
-          <input type="text" name="observacion[<?= $id ?>]" placeholder="Opcional" style="width:100%;">
-        </td>
-      </tr>
-    <?php endforeach; else: ?>
-      <tr><td colspan="5">No hay alumnos para esta clase (verifica matrícula/año).</td></tr>
-    <?php endif; ?>
-  </table>
-
-  <br>
-  <button type="submit">💾 Guardar asistencia de hoy</button>
-  &nbsp;&nbsp;
-  <a href="<?= BASE_URL ?>/index.php?controller=horario&action=index">⬅️ Volver a mi horario</a>
-</form>
-
-<script>
-  // Visual activo para el radio seleccionado
-  document.querySelectorAll('.estado-grid').forEach(grid => {
-    grid.addEventListener('change', e => {
-      if (e.target && e.target.type === 'radio') {
-        // desactivar todos los pills del grupo
-        grid.querySelectorAll('.estado-pill').forEach(p => p.classList.remove('active'));
-        // activar el pill del radio marcado
-        const label = e.target.closest('.estado-pill');
-        if (label) label.classList.add('active');
-      }
+  <script>
+    // Visual activo para el radio seleccionado
+    document.querySelectorAll('.estado-grid').forEach(grid => {
+      grid.addEventListener('change', e => {
+        if (e.target && e.target.type === 'radio') {
+          grid.querySelectorAll('.estado-pill').forEach(p => p.classList.remove('active'));
+          const label = e.target.closest('.estado-pill');
+          if (label) label.classList.add('active');
+        }
+      });
     });
-  });
 
-  // "Marcar todo" por valor
-  function marcarTodo(valor){
-    document.querySelectorAll('tr[data-alumno]').forEach(row => {
-      const id = row.getAttribute('data-alumno');
-      const radio = row.querySelector(`input[type="radio"][name="estado[${id}]"][value="${valor}"]`);
-      if (radio) {
-        radio.checked = true;
-        // actualizar estilo activo
-        row.querySelectorAll('.estado-pill').forEach(p => p.classList.remove('active'));
-        const label = radio.closest('.estado-pill');
-        if (label) label.classList.add('active');
-      }
-    });
-  }
-</script>
+    // "Marcar todo" por valor
+    function marcarTodo(valor){
+      document.querySelectorAll('tr[data-alumno]').forEach(row => {
+        const id = row.getAttribute('data-alumno');
+        const radio = row.querySelector(`input[type="radio"][name="estado[${id}]"][value="${valor}"]`);
+        if (radio) {
+          radio.checked = true;
+          row.querySelectorAll('.estado-pill').forEach(p => p.classList.remove('active'));
+          const label = radio.closest('.estado-pill');
+          if (label) label.classList.add('active');
+        }
+      });
+    }
+  </script>
+</body>
+</html>
