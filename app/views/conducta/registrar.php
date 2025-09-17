@@ -1,10 +1,157 @@
 <?php
 // Variables esperadas: $infoClase (opcional), $alumnos, $_GET['idHorario']
 ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registrar Conducta</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .info-box {
+      background: #fff;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    form {
+      background: #fff;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    form label {
+      font-weight: bold;
+    }
+
+    input[type="number"], input[type="text"] {
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+
+    button, a.button-link {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+      transition: background 0.2s ease-in-out;
+    }
+
+    button:hover, a.button-link:hover {
+      background: #0056b3;
+    }
+
+    .acciones {
+      margin: 15px 0;
+    }
+    .acciones button {
+      margin: 3px;
+      background: #6c757d;
+    }
+    .acciones button:hover {
+      background: #5a6268;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    table th {
+      background: #007bff;
+      color: white;
+    }
+
+    .radio-pills {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px,1fr));
+      gap: 6px;
+      margin-top: 5px;
+    }
+    .pill {
+      border: 1px solid #ccc;
+      border-radius: 16px;
+      padding: 6px 10px;
+      cursor: pointer;
+      user-select: none;
+      text-align: center;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .pill input { display: none; }
+    .pill.active {
+      background: #e6f0ff;
+      border-color: #007bff;
+      font-weight: bold;
+      color: #007bff;
+    }
+    .muted {
+      color:#666;
+      font-size:12px;
+      margin-top: 4px;
+    }
+
+    .btn-guardar {
+      background: #28a745;
+    }
+    .btn-guardar:hover {
+      background: #218838;
+    }
+
+    .volver {
+      margin-left: 10px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .volver:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 900px) {
+      .radio-pills { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px) {
+      .radio-pills { grid-template-columns: repeat(1, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
 <h2>Registrar Conducta</h2>
 
 <?php if (!empty($infoClase)): ?>
-<div style="padding:10px;border:1px solid #ccc;margin-bottom:10px;">
+<div class="info-box">
   <strong>Clase:</strong> <?= htmlspecialchars($infoClase['nombreAsignatura']) ?>
   &nbsp;|&nbsp; <strong>Grado/Sección:</strong> <?= htmlspecialchars($infoClase['nombreGrado']) ?> - <?= htmlspecialchars($infoClase['nombreSeccion']) ?>
   &nbsp;|&nbsp; <strong>Modalidad:</strong> <?= htmlspecialchars($infoClase['nombreModalidad']) ?>
@@ -16,7 +163,7 @@
 <?php endif; ?>
 
 <!-- Filtro de año (opcional) -->
-<form method="GET" action="<?= BASE_URL ?>/index.php" style="margin-bottom:10px;">
+<form method="GET" action="<?= BASE_URL ?>/index.php">
   <input type="hidden" name="controller" value="conducta">
   <input type="hidden" name="action" value="registrar">
   <input type="hidden" name="idHorario" value="<?= (int)($_GET['idHorario'] ?? 0) ?>">
@@ -28,26 +175,16 @@
 <form method="POST" action="<?= BASE_URL ?>/index.php?controller=conducta&action=registrar">
   <input type="hidden" name="idHorario" value="<?= (int)($_GET['idHorario'] ?? 0) ?>">
 
-  <div style="margin:10px 0;">
-    <em>Acciones rápidas:</em>
-    <button type="button" onclick="marcarTodoSinIncidente()">Marcar todo SIN incidente</button>
-    <button type="button" onclick="marcarTodoTipo('Tarea no entregada')">Marcar todo: Tarea no entregada</button>
+  <div class="acciones">
+    <em>Acciones rápidas:</em><br>
+    <button type="button" onclick="marcarTodoSinIncidente()">Todo SIN incidente</button>
+    <button type="button" onclick="marcarTodoTipo('Tarea no entregada')">Todo: Tarea no entregada</button>
     <button type="button" onclick="marcarTodoSeveridad('Baja')">Severidad: Baja</button>
     <button type="button" onclick="marcarTodoSeveridad('Media')">Severidad: Media</button>
     <button type="button" onclick="marcarTodoSeveridad('Alta')">Severidad: Alta</button>
   </div>
 
-  <style>
-    .radio-pills { display: grid; grid-template-columns: repeat(3, minmax(120px,1fr)); gap: 6px; }
-    .pill { border: 1px solid #ccc; border-radius: 16px; padding: 6px 10px; display: inline-block; cursor: pointer; user-select: none; text-align:center; }
-    .pill input { display: none; }
-    .pill.active { background: #f0f0f0; border-color: #999; font-weight: 600; }
-    @media (max-width: 900px) { .radio-pills { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 520px) { .radio-pills { grid-template-columns: repeat(1, 1fr); } }
-    .muted { color:#666; font-size:12px; }
-  </style>
-
-  <table border="1" cellpadding="6" cellspacing="0" width="100%">
+  <table>
     <tr>
       <th>#</th>
       <th>Alumno</th>
@@ -59,8 +196,6 @@
 
     <?php if (!empty($alumnos)): $i=1; foreach ($alumnos as $al): 
       $id = (int)$al['id_alumno'];
-
-      // names para POST: tipo[id], severidad[id], detalle[id]
       $nameTipo = "tipo[$id]";
       $nameSev  = "severidad[$id]";
       $nameDet  = "detalle[$id]";
@@ -70,13 +205,11 @@
         <td><?= htmlspecialchars($al['nombre']) ?></td>
         <td><?= htmlspecialchars($al['nie']) ?></td>
 
-        <!-- TIPO: radios exclusivos por alumno -->
         <td>
-          <div class="radio-pills" role="radiogroup" aria-label="Tipo de incidente">
+          <div class="radio-pills" role="radiogroup">
             <?php
-              // La primera opción es "Sin incidente" => enviará vacío (para que el controlador lo ignore)
               $tipos = [
-                'Sin incidente' => '',  // valor vacío
+                'Sin incidente' => '',
                 'Falta de respeto' => 'Falta de respeto',
                 'Tarea no entregada' => 'Tarea no entregada',
                 'Indisciplina' => 'Indisciplina',
@@ -99,12 +232,11 @@
           <div class="muted">Si eliges “Otro”, describe en detalle.</div>
         </td>
 
-        <!-- SEVERIDAD: radios exclusivos por alumno -->
         <td>
-          <div class="radio-pills" role="radiogroup" aria-label="Severidad">
+          <div class="radio-pills" role="radiogroup">
             <?php
               $sevs = ['Baja','Media','Alta'];
-              foreach ($sevs as $si => $sev):
+              foreach ($sevs as $sev):
                 $idSev = "sev_{$id}_".strtolower($sev);
                 $checked = ($sev === 'Baja') ? 'checked' : '';
             ?>
@@ -116,9 +248,8 @@
           </div>
         </td>
 
-        <!-- DETALLE -->
         <td>
-          <input type="text" name="<?= $nameDet ?>" placeholder="Opcional (obligatorio si eliges 'Otro')" style="width:100%;">
+          <input type="text" name="<?= $nameDet ?>" placeholder="Opcional (obligatorio si eliges 'Otro')">
         </td>
       </tr>
     <?php endforeach; else: ?>
@@ -127,13 +258,11 @@
   </table>
 
   <br>
-  <button type="submit">💾 Guardar incidentes de hoy</button>
-  &nbsp;&nbsp;
-  <a href="<?= BASE_URL ?>/index.php?controller=horario&action=index">⬅️ Volver a mi horario</a>
+  <button type="submit" class="btn-guardar">💾 Guardar incidentes de hoy</button>
+  <a href="<?= BASE_URL ?>/index.php?controller=horario&action=index" class="volver">⬅️ Volver a mi horario</a>
 </form>
 
 <script>
-  // Visual activo para cualquier grupo de radios
   document.querySelectorAll('.radio-pills').forEach(group => {
     group.addEventListener('change', e => {
       if (e.target && e.target.type === 'radio') {
@@ -144,24 +273,20 @@
     });
   });
 
-  // Marcar todo SIN incidente (pone la primera opción, que es "")
   function marcarTodoSinIncidente(){
     document.querySelectorAll('tr[data-alumno]').forEach(row => {
       const tipoRadios = row.querySelectorAll('input[type="radio"][name^="tipo["]');
       if (!tipoRadios.length) return;
-      // La primera opción es "Sin incidente"
       const first = tipoRadios[0];
       first.checked = true;
       row.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
       const label = first.closest('.pill');
       if (label) label.classList.add('active');
-      // Limpia el detalle
       const detalle = row.querySelector('input[name^="detalle["]');
       if (detalle) detalle.value = '';
     });
   }
 
-  // Marcar todo un tipo determinado (si existe ese valor en la fila)
   function marcarTodoTipo(valor){
     document.querySelectorAll('tr[data-alumno]').forEach(row => {
       const radios = row.querySelectorAll('input[type="radio"][name^="tipo["]');
@@ -176,7 +301,6 @@
     });
   }
 
-  // Marcar toda la severidad
   function marcarTodoSeveridad(sev){
     document.querySelectorAll('tr[data-alumno]').forEach(row => {
       const radios = row.querySelectorAll(`input[type="radio"][name^="severidad["][value="${sev}"]`);
@@ -193,3 +317,6 @@
     });
   }
 </script>
+
+</body>
+</html>

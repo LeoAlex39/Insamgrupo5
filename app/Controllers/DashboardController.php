@@ -7,7 +7,7 @@ class DashboardController {
         }
         $usuario = $_SESSION['usuario'];
         $viewFile = VIEW_PATH . '/dashboard/director.php';
-        include VIEW_PATH . '/layout_director.php';
+        include VIEW_PATH . '/layout.php';
     }
 
     public function docente() {

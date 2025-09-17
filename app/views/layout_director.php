@@ -68,11 +68,6 @@
         <span class="logo-icon">🎓</span> <strong>INSAM</strong>
       </div>
       <ul class="navbar-links">
-        <li><a href="<?= BASE_URL ?>/index.php?controller=dashboard&action=director">Inicio</a></li>
-        <li><a href="<?= BASE_URL ?>/index.php?controller=alumnos&action=index">Alumnos</a></li>
-        <li><a href="<?= BASE_URL ?>/index.php?controller=docente&action=index">Docentes</a></li>
-        <li><a href="<?= BASE_URL ?>/index.php?controller=asistencia&action=lista">Asistencias</a></li>
-        <li><a href="<?= BASE_URL ?>/index.php?controller=reporte&action=index">Reportes</a></li>
         <li><a href="<?= BASE_URL ?>/index.php?controller=auth&action=logout">Salir</a></li>
       </ul>
     </div>
