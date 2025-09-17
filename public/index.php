@@ -18,6 +18,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Cargar core y clases
 require_once CORE_PATH . '/Database.php';
+require_once CORE_PATH . '/View.php';
 
 // (Requiere tus modelos y controladores; ajusta nombres reales)
 require_once APP_PATH . '/models/Conducta.php';
